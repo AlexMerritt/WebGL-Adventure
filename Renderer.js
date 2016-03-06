@@ -1,5 +1,53 @@
-﻿
+﻿function Position(){
+    Position.prototype.x;
+    Position.prototype.y;
+    Position.prototype.z;
+}
 
+function Renderable(){
+    Renderable.prototype.program;
+    Renderable.prototype.vertexBuffer;
+    Renderable.prototype.numfaces;
+    Renderable.prototype.position;
+    
+    Renderable.prototype.GetPosition = function(){
+        var mat = mat4.create();
+        
+        mat4.identity(mat);
+        
+        mat4.translate(mat, [this.position.x, this.position.y, this.position.z]);
+        
+        return mat;
+    }
+}
+
+function Camera(){
+    Camera.prototype.projection;
+    Camera.prototype.world;
+    Camera.prototype.x;
+    Camera.prototype.y;
+    Camera.prototype.z;
+    
+    Camera.prototype.Init = function(width, height){
+        this.world = mat4.create();
+        
+        this.projection = mat4.create();
+        mat4.perspective(45, width / height, 0.1, 100.0, this.projection);
+    }
+    
+    Camera.prototype.SetPosition = function(x, y, z){
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        
+        this.Update();
+    }
+    
+    Camera.prototype.Update = function(){
+        mat4.identity(this.world);
+        mat4.translate(this.world, [this.x, this.y, this.z]);
+    }
+}
 
 function Renderer() {
     // You will see a lot of var gl = this.glContext
@@ -11,12 +59,18 @@ function Renderer() {
     Renderer.prototype.canvas = null;
     Renderer.prototype.vertexBuffer = null;
     Renderer.prototype.shaderProgram = null;
+    Renderer.prototype.clearColor = null;
+    Renderer.prototype.renderables = null;
+    Renderer.prototype.camera = null;
 
     Renderer.prototype.Init = function () {
         this.canvas = document.getElementById("window");
 
         // Different brwosers use different web gl contexts so I need to check several
         this.glContext = this.canvas.getContext("webgl") || this.canvas.getContext("experimental-webgl") || this.canvas.getContext("moz-webgl") || this.canvas.getContext("webkit-3d");
+        
+        this.SetClearColor([0.0, 0.0, 0.0, 1.0]);
+        this.renderables = [];
 
         if (this.glContext) {
             this.InitWebGL();
@@ -40,10 +94,29 @@ function Renderer() {
     }
 
     Renderer.prototype.LoadScene = function () {
-        this.vertexBuffer = this.CreateBuffer(verts);
-        this.shaderProgram = this.CreateShaderProgram(vs1, fs1);
-
-        //this.GetShaderCode("vertexShader");
+        this.camera = new Camera();
+        this.camera.Init(this.canvas.width, this.canvas.height);
+        this.camera.SetPosition(0,0,-5);
+        
+        this.renderables.push(this.CreateRenderable([1, 0, 0], vertices, vertexShader, fragmentShader));
+        //this.renderables.push(this.CreateRenderable([0, 0, 0], t2, vs1, fs1));
+    }
+    
+    Renderer.prototype.CreateRenderable = function(position, verts, vertexShaderCode, fragmentShaderCode) {
+        r = new Renderable();
+        
+        r.vertexBuffer = this.CreateBuffer(verts);
+        r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
+        r.numFaces = 3;
+        
+        p = new Position();
+        p.x = position[0];
+        p.y = position[1];
+        p.z = position[2];
+        
+        r.position = p;
+        
+        return r;
     }
 
     Renderer.prototype.CreateBuffer = function(verts) {
@@ -68,7 +141,7 @@ function Renderer() {
         var k = shaderScript.firstChild;
         while (k) {
             if (k.nodeType == 3) {
-                str += k.textContent;
+                str += k.tsetMatrixUniformsextContent;
             }
             k = k.nextSibling;
         }
@@ -120,39 +193,70 @@ function Renderer() {
 
         return shader;
     }
+    
+    Renderer.prototype.SetClearColor = function(color){
+        this.clearColor = color;
+    }
+    
+    Renderer.prototype.SetMatricies = function(camera, shader){
+        var gl = this.glContext;
+        
+        gl.uniformMatrix4fv(shader.mMatrixUniform, false, camera.world);
+        gl.uniformMatrix4fv(shader.pMatrixUniform, false, camera.projection);
+        
+    }
 
-    Renderer.prototype.Render = function () {
+    Renderer.prototype.Render = function (camera, renderables) {
         var gl = this.glContext;
 
         this.Begin();
-
-        // Use the combined shader program object
-        gl.useProgram(this.shaderProgram);
-
-        //Bind vertex buffer object
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-
-        //Get the attribute location
-        var coord = gl.getAttribLocation(this.shaderProgram, "coordinates");
-
-        //point an attribute to the currently bound VBO
-        gl.vertexAttribPointer(coord, 2, gl.FLOAT, false, 0, 0);
-
-        //Enable the attribute
-        gl.enableVertexAttribArray(coord);
-
-        // Draw the triangle
-        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        
+        for (var i = 0; i < renderables.length; i++)
+        {
+            this.Draw(camera, renderables[i]);
+        }
+        
 
         this.End();
+    }
+    
+    Renderer.prototype.Draw = function(camera, object){
+        var gl = this.glContext;
+        // Use the combined shader program object
+        gl.useProgram(object.program);
+
+        //Bind vertex buffer object
+        gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
+        
+        var pos = gl.getAttribLocation(object.program, "vertexPos");
+        gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+        
+        gl.enableVertexAttribArray(pos);
+        
+        console.log(object.GetPosition());
+        
+        console.log(camera.projection);
+        console.log(camera.world);
+        
+        var pos = gl.getUniformLocation(object.program, "worldMatrix");
+        gl.uniformMatrix4fv(pos, false, object.GetPosition());
+        
+        var proj = gl.getUniformLocation(object.program, "projectionMatrix");
+        gl.uniformMatrix4fv(proj, false, camera.projection);
+        
+        var world = gl.getUniformLocation(object.program, "viewMatrix");
+        gl.uniformMatrix4fv(world, false, camera.world);
+
+        // Draw the triangle
+        gl.drawArrays(gl.TRIANGLES, 0, object.numFaces);
     }
 
     Renderer.prototype.Begin = function(){
         // Clear the canvas
-        this.glContext.clearColor(0.5, 0.5, 0.5, 0.9);
+        this.glContext.clearColor(this.clearColor[0], this.clearColor[1], this.clearColor[2], this.clearColor[3]);
 
         // Clear the color buffer bit
-        this.glContext.clear(this.glContext.COLOR_BUFFER_BIT);
+        this.glContext.clear(this.glContext.COLOR_BUFFER_BIT | this.glContext.DEPTH_BUFFER_BIT);
     }
 
     Renderer.prototype.End = function () {
@@ -160,11 +264,38 @@ function Renderer() {
     }
 }
 
+function RenderApp() {
+    RenderApp.prototype.renderables = null;
+    RenderApp.prototype.renderer = null;
+    RenderApp.prototype.camera = null;
 
+    RenderApp.prototype.Init = function(){
+        this.renderer = new Renderer();
+        this.renderer.Init();
+        
+        this.LoadApp();
+    }
+
+    RenderApp.prototype.LoadApp = function(){
+        canvas = document.getElementById("window");
+        this.renderables = [];
+        
+        this.camera = new Camera();
+        this.camera.Init(canvas.width, canvas.height);
+        this.camera.SetPosition(0,0,-5);
+        
+        this.renderables.push(this.renderer.CreateRenderable([1, 0, 0], vertices, vertexShader, fragmentShader));
+    }
+
+    RenderApp.prototype.Run = function(){
+        this.renderer.Render(this.camera, this.renderables);
+        console.log(this.renderables);
+    }
+}
 
 function RunGL() {
-    renderer = new Renderer();
-    
-    renderer.Init();
-    renderer.Render();
+    app = new RenderApp();
+    app.Init();
+    app.Run();
 }
+
