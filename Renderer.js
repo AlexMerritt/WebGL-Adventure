@@ -342,7 +342,7 @@ function RenderApp() {
         var now = performance.now();
         
         // Calculate the delta time since last frame
-        var deltaTime = now - last;
+        var deltaTime = now - deltaTime;
         
         // The first couple frams have large deltas.
         // so I just skip them
