@@ -9,6 +9,8 @@ You can see my progress at my github pages for this repo(http://alexmerritt.gith
 
 
 File List:
+
+
 Renderer.js - This is the main file where the web gl is being implemnted. Right now it has several classes which include the renderer and a rendering app. The app will feed data to the renderer to create object graphic objects and drawing. There are other objects that make the renderer cleaner.
 
 Model.js - Until I can download and import actual 3d model file formats such as STL I am going to put the model data here.
