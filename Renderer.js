@@ -4,13 +4,20 @@
     Position.prototype.z;
 }
 
+function Buffer(){
+    Renderable.prototype.data;
+    Renderable.prototype.numElements;
+    Renderable.prototype.elementSize;
+}
+
 function Renderable(){
     Renderable.prototype.program;
     Renderable.prototype.vertexBuffer;
+    Renderable.prototype.colorBuffer;
     Renderable.prototype.numfaces;
     Renderable.prototype.position;
     
-    Renderable.prototype.GetPosition = function(){
+    Renderable.prototype.GetWorldMatrix = function(){
         var mat = mat4.create();
         
         mat4.identity(mat);
@@ -35,12 +42,22 @@ function Camera(){
         mat4.perspective(45, width / height, 0.1, 100.0, this.projection);
     }
     
+    Camera.prototype.GetPosition = function(){
+        return [this.x, this.y, this.z];
+    }
+    
     Camera.prototype.SetPosition = function(x, y, z){
         this.x = x;
         this.y = y;
         this.z = z;
         
         this.Update();
+    }
+    
+    Camera.prototype.Move = function(x,y,z){
+        this.x += x;
+        this.y += y;
+        this.z += z;
     }
     
     Camera.prototype.Update = function(){
@@ -72,9 +89,9 @@ function Renderer() {
         this.SetClearColor([0.0, 0.0, 0.0, 1.0]);
         this.renderables = [];
 
+        // Initialize the WebGl context if we got the context from the browser
         if (this.glContext) {
             this.InitWebGL();
-            this.LoadScene();
         }
         else {
             console.log("Your Browser does not support web gl");
@@ -92,23 +109,30 @@ function Renderer() {
         // Enable the depth test
         gl.enable(gl.DEPTH_TEST);
     }
-
-    Renderer.prototype.LoadScene = function () {
-        this.camera = new Camera();
-        this.camera.Init(this.canvas.width, this.canvas.height);
-        this.camera.SetPosition(0,0,-5);
-        
-        this.renderables.push(this.CreateRenderable([1, 0, 0], vertices, vertexShader, fragmentShader));
-        //this.renderables.push(this.CreateRenderable([0, 0, 0], t2, vs1, fs1));
-    }
     
     Renderer.prototype.CreateRenderable = function(position, verts, vertexShaderCode, fragmentShaderCode) {
         r = new Renderable();
         
-        r.vertexBuffer = this.CreateBuffer(verts);
-        r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
-        r.numFaces = 3;
+        // Create the vertex buffer and set it's attributes
+        vb = new Buffer();
+        vb.data = this.CreateBuffer(verts);
+        vb.numElements = 3;
+        vb.elementSize = 2;
         
+        r.vertexBuffer = vb;
+        
+        // Create the color buffer and set it's attributes
+        cb = new Buffer();
+        cb.data = this.CreateBuffer(colors);
+        cb.numElements = 3;
+        cb.elementSize = 4;
+        
+        r.colorBuffer = cb;
+        
+        // Create a shader program from a vertex and fragment shader code
+        r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
+        
+        // Create a point and set it's position
         p = new Position();
         p.x = position[0];
         p.y = position[1];
@@ -119,36 +143,19 @@ function Renderer() {
         return r;
     }
 
-    Renderer.prototype.CreateBuffer = function(verts) {
+    Renderer.prototype.CreateBuffer = function(data) {
         var gl = this.glContext;
 
-        var vertexBuffer = gl.createBuffer();
+        var buffer = gl.createBuffer();
 
         // Bind the buffer so we can write to it
-        gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(verts), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
 
         // Unbind the buffer since we are finished
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-        return vertexBuffer;
-    }
-
-    Renderer.prototype.GetShaderCode = function(id) {
-        var shaderScript = document.getElementById(id);
-
-        var str = "";
-        var k = shaderScript.firstChild;
-        while (k) {
-            if (k.nodeType == 3) {
-                str += k.tsetMatrixUniformsextContent;
-            }
-            k = k.nextSibling;
-        }
-
-        console.log(str);
-
-        return str;
+        return buffer;
     }
 
     Renderer.prototype.CreateShaderProgram = function(vertexCode, fragmentCode){
@@ -183,10 +190,12 @@ function Renderer() {
 
         // Type is either going to be a vertex shader or a fragment shader
         var shader = gl.createShader(type);
-
+        
+        // Set and shader code and compile it
         gl.shaderSource(shader, code);
         gl.compileShader(shader);
 
+        // Output a message if we had any problems creating the shader
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
             console.log(gl.getShaderInfoLog(shader));
         }
@@ -197,20 +206,13 @@ function Renderer() {
     Renderer.prototype.SetClearColor = function(color){
         this.clearColor = color;
     }
-    
-    Renderer.prototype.SetMatricies = function(camera, shader){
-        var gl = this.glContext;
-        
-        gl.uniformMatrix4fv(shader.mMatrixUniform, false, camera.world);
-        gl.uniformMatrix4fv(shader.pMatrixUniform, false, camera.projection);
-        
-    }
 
-    Renderer.prototype.Render = function (camera, renderables) {
+    Renderer.prototype.Render = function (deltaTime, camera, renderables) {
         var gl = this.glContext;
 
         this.Begin();
         
+        // For each renderable draw it
         for (var i = 0; i < renderables.length; i++)
         {
             this.Draw(camera, renderables[i]);
@@ -222,33 +224,40 @@ function Renderer() {
     
     Renderer.prototype.Draw = function(camera, object){
         var gl = this.glContext;
-        // Use the combined shader program object
+        
+        // Set the shader program we are going to use
         gl.useProgram(object.program);
 
-        //Bind vertex buffer object
-        gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer);
+        //Bind vertex buffer object and set the vertex on the shader
+        gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer.data);
         
         var pos = gl.getAttribLocation(object.program, "vertexPos");
-        gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+        gl.vertexAttribPointer(pos, object.vertexBuffer.elementSize, gl.FLOAT, false, 0, 0);
         
         gl.enableVertexAttribArray(pos);
         
-        console.log(object.GetPosition());
+        // Bind and declare the color vertex on the shader
+        gl.bindBuffer(gl.ARRAY_BUFFER, object.colorBuffer.data);
         
-        console.log(camera.projection);
-        console.log(camera.world);
+        var color = gl.getAttribLocation(object.program, "inColor");
+        gl.vertexAttribPointer(color, object.colorBuffer.elementSize, gl.FLOAT, false, 0, 0);
         
+        gl.enableVertexAttribArray(color);
+        
+        // Set the object's position on the shader
         var pos = gl.getUniformLocation(object.program, "worldMatrix");
-        gl.uniformMatrix4fv(pos, false, object.GetPosition());
+        gl.uniformMatrix4fv(pos, false, object.GetWorldMatrix());
         
+        // Set the camera's view on the shader
         var proj = gl.getUniformLocation(object.program, "projectionMatrix");
         gl.uniformMatrix4fv(proj, false, camera.projection);
         
+        // Set the camera's project on the shader
         var world = gl.getUniformLocation(object.program, "viewMatrix");
         gl.uniformMatrix4fv(world, false, camera.world);
 
         // Draw the triangle
-        gl.drawArrays(gl.TRIANGLES, 0, object.numFaces);
+        gl.drawArrays(gl.TRIANGLES, 0, object.vertexBuffer.numElements);
     }
 
     Renderer.prototype.Begin = function(){
@@ -263,6 +272,8 @@ function Renderer() {
 
     }
 }
+
+function empty(){}
 
 function RenderApp() {
     RenderApp.prototype.renderables = null;
@@ -282,14 +293,46 @@ function RenderApp() {
         
         this.camera = new Camera();
         this.camera.Init(canvas.width, canvas.height);
-        this.camera.SetPosition(0,0,-5);
+        this.camera.SetPosition(0.0,0.0,-5.0);
         
-        this.renderables.push(this.renderer.CreateRenderable([1, 0, 0], vertices, vertexShader, fragmentShader));
+        this.renderables.push(this.renderer.CreateRenderable([-2, 0, 0], vertices, vertexShader, fragmentShader));
     }
 
     RenderApp.prototype.Run = function(){
-        this.renderer.Render(this.camera, this.renderables);
-        console.log(this.renderables);
+        // Start this crazy update loop
+        this.Frame(performance.now());
+    }
+    
+    
+    
+    RenderApp.prototype.Frame = function(deltaTime){
+        var now = performance.now();
+        
+        // Calculate the delta time since last frame
+        var deltaTime = now - last;
+        
+        // The first couple frams have large deltas.
+        // so I just skip them
+        // I need to figure out a better way to do this
+        if (deltaTime > 10.0){
+            deltaTime = 0;
+        }
+        
+        this.Update(deltaTime);
+        this.Render(deltaTime);
+        
+        // This makes this loop continusly 
+        requestAnimationFrame(this.Frame.bind(this));
+    }
+    
+    RenderApp.prototype.Update = function(deltaTime){
+        // Just scrolling the camera
+        this.camera.Move(0.01 * deltaTime, 0.0, 0.0);
+        this.camera.Update();
+    }
+    
+    RenderApp.prototype.Render = function(deltaTime){
+        this.renderer.Render(deltaTime, this.camera, this.renderables);
     }
 }
 
