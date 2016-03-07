@@ -1,4 +1,14 @@
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
 ﻿function Buffer(){
+=======
+﻿function Position(){
+    Position.prototype.x;
+    Position.prototype.y;
+    Position.prototype.z;
+}
+
+function Buffer(){
+>>>>>>> Added Js Files
     Renderable.prototype.data;
     Renderable.prototype.numElements;
     Renderable.prototype.elementSize;
@@ -88,7 +98,11 @@ function Renderer() {
             this.InitWebGL();
         }
         else {
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
             alert("Your Browser does not support web gl");
+=======
+            console.log("Your Browser does not support web gl");
+>>>>>>> Added Js Files
         }
     }
 
@@ -104,6 +118,7 @@ function Renderer() {
         gl.enable(gl.DEPTH_TEST);
     }
     
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
     Renderer.prototype.CreateRenderable = function(position, v, c, vertexShaderCode, fragmentShaderCode) {
         
         log("vertex shader: " + vertexShaderCode);
@@ -113,20 +128,34 @@ function Renderer() {
         console.log(numElements);
         console.log(v);
         
+=======
+    Renderer.prototype.CreateRenderable = function(position, verts, vertexShaderCode, fragmentShaderCode) {
+>>>>>>> Added Js Files
         r = new Renderable();
         
         // Create the vertex buffer and set it's attributes
         vb = new Buffer();
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
         vb.data = this.CreateBuffer(v);
         vb.numElements = numElements;
         vb.elementSize = 3;
+=======
+        vb.data = this.CreateBuffer(verts);
+        vb.numElements = 3;
+        vb.elementSize = 2;
+>>>>>>> Added Js Files
         
         r.vertexBuffer = vb;
         
         // Create the color buffer and set it's attributes
         cb = new Buffer();
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
         cb.data = this.CreateBuffer(c);
         cb.numElements = numElements;
+=======
+        cb.data = this.CreateBuffer(colors);
+        cb.numElements = 3;
+>>>>>>> Added Js Files
         cb.elementSize = 4;
         
         r.colorBuffer = cb;
@@ -275,3 +304,75 @@ function Renderer() {
     }
 }
 
+<<<<<<< 0278608706b17e3e510ca6622e3a5da9c5ac2939
+=======
+function empty(){}
+
+function RenderApp() {
+    RenderApp.prototype.renderables = null;
+    RenderApp.prototype.renderer = null;
+    RenderApp.prototype.camera = null;
+
+    RenderApp.prototype.Init = function(){
+        this.renderer = new Renderer();
+        this.renderer.Init();
+        
+        this.LoadApp();
+    }
+
+    RenderApp.prototype.LoadApp = function(){
+        canvas = document.getElementById("window");
+        this.renderables = [];
+        
+        this.camera = new Camera();
+        this.camera.Init(canvas.width, canvas.height);
+        this.camera.SetPosition(0.0,0.0,-5.0);
+        
+        this.renderables.push(this.renderer.CreateRenderable([-2, 0, 0], vertices, vertexShader, fragmentShader));
+    }
+
+    RenderApp.prototype.Run = function(){
+        // Start this crazy update loop
+        this.Frame(performance.now());
+    }
+    
+    
+    
+    RenderApp.prototype.Frame = function(deltaTime){
+        var now = performance.now();
+        
+        // Calculate the delta time since last frame
+        var deltaTime = now - last;
+        
+        // The first couple frams have large deltas.
+        // so I just skip them
+        // I need to figure out a better way to do this
+        if (deltaTime > 10.0){
+            deltaTime = 0;
+        }
+        
+        this.Update(deltaTime);
+        this.Render(deltaTime);
+        
+        // This makes this loop continusly 
+        requestAnimationFrame(this.Frame.bind(this));
+    }
+    
+    RenderApp.prototype.Update = function(deltaTime){
+        // Just scrolling the camera
+        this.camera.Move(0.01 * deltaTime, 0.0, 0.0);
+        this.camera.Update();
+    }
+    
+    RenderApp.prototype.Render = function(deltaTime){
+        this.renderer.Render(deltaTime, this.camera, this.renderables);
+    }
+}
+
+function RunGL() {
+    app = new RenderApp();
+    app.Init();
+    app.Run();
+}
+
+>>>>>>> Added Js Files
