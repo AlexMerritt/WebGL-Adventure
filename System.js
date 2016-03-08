@@ -51,19 +51,46 @@ var KeyCode = {
     Z : 90,
 }
 
+function Mouse() {
+    Mouse.prototype.x;
+    Mouse.prototype.y;
+    Mouse.prototype.down;
+
+    Mouse.prototype.Init = function(){
+        this.x = 0;
+        this.y = 0;
+
+        this.down = false;
+    }
+}
+
 function Input(){
     // We are using a buffered keyboard so we need 2 keyboards
     Input.prototype.currentKeyboard;
     Input.prototype.lastKeyboard;
+
+    Input.prototype.lastMouse;
+    Input.prototype.currentMouse;
+
+    Input.prototype.mouseState;
     
     Input.prototype.Init = function(){
         this.currentKeyboard = this.CreateKeyboard();
         this.lastKeyboard = this.CreateKeyboard();
+
+        this.currentMouse = this.CreateMouse();
+        this.lastMouse = this.CreateMouse();
         
         this.keyboardState = this.CreateKeyboard();
         
+        this.mouseState = this.CreateMouse();
+
         document.addEventListener('keydown', this.KeyDown.bind(this));
         document.addEventListener('keyup', this.KeyUp.bind(this));
+
+        document.onmousemove = this.MouseMove.bind(this);
+        document.onmouseup = this.MouseUp.bind(this);
+        document.onmousedown = this.MouseDown.bind(this);
     }
     
     Input.prototype.CreateKeyboard = function(){
@@ -77,10 +104,34 @@ function Input(){
         
         return keyboard;
     }
+
+    Input.prototype.CreateMouse = function () {
+        mouse = new Mouse();
+        mouse.Init();
+
+        return mouse;
+    }
     
     // This return what the current state of the keybard is
     Input.prototype.GetKeyboardState = function() {
         return this.keyboardState;
+    }
+
+    Input.prototype.GetMouseState = function () {
+        mouse = this.CreateMouse();
+
+        mouse.x = this.mouseState.x;
+        mouse.y = this.mouseState.y;
+
+        mouse.down = this.mouseState.down;
+
+        return mouse;
+    }
+
+    Input.prototype.GetMouseDelta = function () {
+        //console.log(this.currentMouse);
+        //console.log(this.lastMouse);
+        return [this.currentMouse.x - this.lastMouse.x, this.currentMouse.y - this.lastMouse.y];
     }
     
     Input.prototype.KeyDown = function(event){
@@ -90,12 +141,33 @@ function Input(){
     Input.prototype.KeyUp = function(event){
         this.keyboardState[event.keyCode] = false;
     }
+
+    Input.prototype.MouseMove = function (event) {
+        //console.log("mouse moved");
+        this.mouseState.x = event.clientX;
+        this.mouseState.y = event.clientY;
+
+        //console.log(this.mouseState);
+    }
+
+    Input.prototype.MouseDown = function () {
+        //console.log("mouse down");
+        this.mouseState.down = true;
+    }
+
+    Input.prototype.MouseUp = function () {
+        //console.log("mouse up");
+        this.mouseState.down = false;
+    }
     
     Input.prototype.Update = function(){
         // To have the ability to check if a key has just been pressed
         // or released we need to keep track of past keyboard state
         this.lastKeyboard = this.currentKeyboard;
         this.currentKeyboard = this.GetKeyboardState();
+
+        this.lastMouse = this.currentMouse;
+        this.currentMouse = this.GetMouseState();
     }
     
     // This should fire as long as the user is holding the key
@@ -113,6 +185,10 @@ function Input(){
     // and releases it
     Input.prototype.IsKeyReleased = function(key){
         return (~this.currentKeyboard[key] && this.lastKeyboard[key]);
+    }
+
+    Input.prototype.IsMouseDown = function () {
+        return this.currentMouse.down;
     }
 }
 

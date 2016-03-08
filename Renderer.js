@@ -29,8 +29,20 @@ function Camera(){
     Camera.prototype.x;
     Camera.prototype.y;
     Camera.prototype.z;
+    Camera.prototype.position;
+    Camera.prototype.rotation;
     
-    Camera.prototype.Init = function(width, height){
+    Camera.prototype.Init = function (width, height) {
+        this.position = new Position();
+        this.position.x = 0;
+        this.position.y = 0;
+        this.position.z = 0;
+
+        this.rotation = new Position();
+        this.rotation.x = 0;
+        this.rotation.y = 0;
+        this.rotation.z = 0;
+
         this.world = mat4.create();
         
         this.projection = mat4.create();
@@ -38,26 +50,38 @@ function Camera(){
     }
     
     Camera.prototype.GetPosition = function(){
-        return [this.x, this.y, this.z];
+        return this.position;
     }
     
     Camera.prototype.SetPosition = function(x, y, z){
-        this.x = x;
-        this.y = y;
-        this.z = z;
+        this.position.x = x;
+        this.position.y = y;
+        this.position.z = z;
         
         this.Update();
     }
     
     Camera.prototype.Move = function(x,y,z){
-        this.x += x;
-        this.y += y;
-        this.z += z;
+        this.position.x += x;
+        this.position.y += y;
+        this.position.z += z;
+    }
+
+    Camera.prototype.GetRotation = function () {
+        return this.rotation;
+    }
+
+    Camera.prototype.Rotate = function (x, y, z) {
+        this.rotation.x += x;
+        this.rotation.y += y;
+        this.rotation.z += z;
     }
     
     Camera.prototype.Update = function(){
         mat4.identity(this.world);
-        mat4.translate(this.world, [this.x, this.y, this.z]);
+
+        mat4.rotate(this.world, this.rotation.y, [0, 1, 0]);
+        mat4.translate(this.world, [this.position.x, this.position.y, this.position.z]);
     }
 }
 

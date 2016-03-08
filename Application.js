@@ -1,4 +1,4 @@
-﻿function Position(){
+﻿function Position() {
     Position.prototype.x;
     Position.prototype.y;
     Position.prototype.z;
@@ -11,18 +11,25 @@ function RenderApp() {
     
     RenderApp.prototype.renderables = null;
 
+    RenderApp.prototype.posElement;
+    RenderApp.prototype.rotElement;
+
     RenderApp.prototype.Init = function(){
         this.input = new Input();
         this.input.Init();
         
         this.renderer = new Renderer();
         this.renderer.Init();
+
+        this.posElement = document.getElementById("pos");
+        this.rotElement = document.getElementById("rot");
         
         this.LoadApp();
     }
 
     RenderApp.prototype.LoadApp = function(){
         canvas = document.getElementById("window");
+
         this.renderables = [];
         
         this.camera = new Camera();
@@ -41,8 +48,6 @@ function RenderApp() {
         // Start this crazy update loop
         this.Frame(performance.now());
     }
-    
-    
     
     RenderApp.prototype.Frame = function(time){
         var now = performance.now();
@@ -66,35 +71,64 @@ function RenderApp() {
     
     RenderApp.prototype.Update = function(deltaTime){
         this.input.Update();
-        
-        var movementSpeed = 0.1;
-        var dir = [0,0];
-        var move = [0,0];
-        
-        if (this.input.IsKeyDown(KeyCode.A)){
-            dir[0] = 1;
-        }
-        else if(this.input.IsKeyDown(KeyCode.D)){
-            dir[0] = -1;
+
+        if (this.input.IsMouseDown())
+        {
+            //console.log("Mouse Down");
         }
         
-        if(this.input.IsKeyDown(KeyCode.W)){
-            dir[1] = -1;
-        }
-        else if(this.input.IsKeyDown(KeyCode.S)){
-            dir[1] = 1;
-        }
-        
-        move = [movementSpeed * dir[0] * deltaTime, movementSpeed * dir[1] * deltaTime];        
-        
-        if (move[0] > 0.0 || move[0] < 0.0 || move[1] > 0.0 || move[1] < 0.0){
-            this.camera.Move(move[0], move[1], 0.0);
-            this.camera.Update();
-        }
+        this.UpdateCamera(deltaTime);
     }
     
     RenderApp.prototype.Render = function(deltaTime){
         this.renderer.Render(deltaTime, this.camera, this.renderables);
+    }
+
+    RenderApp.prototype.UpdateCamera = function(deltaTime) {
+        var movementSpeed = 0.1;
+        var dir = 0;
+        var move = [0, 0];
+        var rot = 0;
+        var moveVector = [0, 0];
+
+        if (this.input.IsKeyDown(KeyCode.W)) {
+            dir = 1;
+        }
+        else if (this.input.IsKeyDown(KeyCode.S)) {
+            dir = -1;
+        }
+
+        
+
+        // Only try and rotate the camera if the mouse is clicked
+        if (this.input.IsMouseDown()) {
+            rot = this.input.GetMouseDelta()[0] / 20.0;
+
+            if (rot > 0 || rot < 0) {
+                this.camera.Rotate(0, rot * 0.1 * deltaTime, 0);
+            }
+        }
+
+        move = [movementSpeed * dir * deltaTime, movementSpeed * dir * deltaTime];
+
+        if (move[0] > 0.0 || move[0] < 0.0 || move[1] > 0.0 || move[1] < 0.0) {
+            //this.camera.Move(move[0], move[1], 0.0);
+            var rotation = -this.camera.GetRotation().y;
+            var sinRot = Math.sin(rotation);
+            var cosRot = Math.cos(rotation);
+
+            this.camera.Move(sinRot * dir * deltaTime, 0, cosRot * dir * deltaTime);
+        }
+
+
+
+        this.camera.Update();
+
+        var pos = this.camera.GetPosition();
+        var rot = this.camera.GetRotation();
+
+        this.posElement.innerHTML = "Position - X:" + pos.x + ", Y:" + pos.y + ", Z:" + pos.z;
+        this.rotElement.innerHTML = "Rotation - X:" + rot.x + ", Y:" + rot.y + ", Z:" + rot.z;
     }
 }
 
