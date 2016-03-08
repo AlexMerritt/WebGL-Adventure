@@ -86,16 +86,35 @@ function RenderApp() {
 
     RenderApp.prototype.UpdateCamera = function(deltaTime) {
         var movementSpeed = 0.1;
-        var dir = 0;
+        var dir = [0, 0];
         var move = [0, 0];
         var rot = 0;
         var moveVector = [0, 0];
+        
+        var mv = vec3.create();
 
         if (this.input.IsKeyDown(KeyCode.W)) {
-            dir = 1;
+            dir[0] = 1;
         }
         else if (this.input.IsKeyDown(KeyCode.S)) {
-            dir = -1;
+            dir[0] = -1;
+        }
+        
+        if (this.input.IsKeyDown(KeyCode.A)) {
+            dir[1] = 1;
+        }
+        else if (this.input.IsKeyDown(KeyCode.D)) {
+            dir[1] = -1;
+        }
+        
+        var norm = dir[0] * dir[1];
+        
+        if (norm < 0)
+            norm = -norm;
+        
+        if (norm != 0){
+            dir[0] = dir[0] / norm;
+            dir[1] = dir[1] / norm;
         }
 
         
@@ -109,15 +128,14 @@ function RenderApp() {
             }
         }
 
-        move = [movementSpeed * dir * deltaTime, movementSpeed * dir * deltaTime];
+        //move = [movementSpeed * dir * deltaTime, movementSpeed * dir * deltaTime];
 
-        if (move[0] > 0.0 || move[0] < 0.0 || move[1] > 0.0 || move[1] < 0.0) {
+        if (dir[0] > 0.0 || dir[0] < 0.0 || dir[1] > 0.0 || dir[1] < 0.0) {
             //this.camera.Move(move[0], move[1], 0.0);
             var rotation = -this.camera.GetRotation().y;
-            var sinRot = Math.sin(rotation);
-            var cosRot = Math.cos(rotation);
 
-            this.camera.Move(sinRot * dir * deltaTime, 0, cosRot * dir * deltaTime);
+            this.camera.Move(Math.sin(rotation) * dir[0] * deltaTime, 0, Math.cos(rotation) * dir[0] * deltaTime);
+            this.camera.Move(Math.sin(rotation + Math.PI / 2.0) * dir[1] * deltaTime, 0, Math.cos(rotation + Math.PI / 2.0) * dir[1] * deltaTime);
         }
 
 
