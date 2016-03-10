@@ -1,4 +1,4 @@
-
+﻿
 function Buffer(){
     Renderable.prototype.data;
     Renderable.prototype.numElements;
@@ -9,6 +9,7 @@ function Renderable(){
     Renderable.prototype.program;
     Renderable.prototype.vertexBuffer;
     Renderable.prototype.colorBuffer;
+    Renderable.prototype.indexBuffer;
     Renderable.prototype.numfaces;
     Renderable.prototype.position;
     
@@ -129,20 +130,21 @@ function Renderer() {
         gl.enable(gl.DEPTH_TEST);
     }
     
-    Renderer.prototype.CreateRenderable = function(position, v, c, vertexShaderCode, fragmentShaderCode) {
+    Renderer.prototype.CreateRenderable = function(position, v, c, i, vertexShaderCode, fragmentShaderCode) {
         
+        log(position)
+        log(v)
+        log(c)
+        log(i)
         log("vertex shader: " + vertexShaderCode);
         log("fragment shader: " + fragmentShaderCode);
         
         var numElements = v.length / 3;
-        console.log(numElements);
-        console.log(v);
         r = new Renderable();
         
         // Create the vertex buffer and set it's attributes
         vb = new Buffer();
-        
-        vb.data = this.CreateBuffer(v);
+        vb.data = this.CreateVB(v);
         vb.numElements = numElements;
         vb.elementSize = 3;
         
@@ -150,11 +152,18 @@ function Renderer() {
         
         // Create the color buffer and set it's attributes
         cb = new Buffer();
-        cb.data = this.CreateBuffer(c);
+        cb.data = this.CreateVB(c);
         cb.numElements = numElements;
         cb.elementSize = 4;
         
         r.colorBuffer = cb;
+        
+        ib = new Buffer();
+        ib.data = this.CreateIB(i);
+        ib.numElements = i.length;
+        ib.elementSize = 1;
+        
+        r.indexBuffer = ib;
         
         // Create a shader program from a vertex and fragment shader code
         r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
@@ -170,19 +179,35 @@ function Renderer() {
         return r;
     }
 
-    Renderer.prototype.CreateBuffer = function(data) {
+    Renderer.prototype.CreateVB = function(data) {
         var gl = this.glContext;
 
-        var buffer = gl.createBuffer();
+        var vb = gl.createBuffer();
 
         // Bind the buffer so we can write to it
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, vb);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), gl.STATIC_DRAW);
 
         // Unbind the buffer since we are finished
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
-        return buffer;
+        return vb;
+    }
+    
+    Renderer.prototype.CreateIB = function(data) {
+        var gl = this.glContext;
+
+        var ib = gl.createBuffer();
+
+        // Bind the buffer so we can write to it
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ib);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(data), gl.STATIC_DRAW);
+
+        // Unbind the buffer since we are finished
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
+
+        return ib;
+        
     }
 
     Renderer.prototype.CreateShaderProgram = function(vertexCode, fragmentCode){
@@ -284,7 +309,10 @@ function Renderer() {
         gl.uniformMatrix4fv(world, false, camera.world);
 
         // Draw the triangle
-        gl.drawArrays(gl.TRIANGLES, 0, object.vertexBuffer.numElements);
+        //gl.drawArrays(gl.TRIANGLES, 0, object.vertexBuffer.numElements);
+        
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer.data);
+        gl.drawElements(gl.TRIANGLES, object.indexBuffer.numElements, gl.UNSIGNED_SHORT, 0);
     }
 
     Renderer.prototype.Begin = function(){

@@ -34,14 +34,15 @@ function RenderApp() {
         
         this.camera = new Camera();
         this.camera.Init(canvas.width, canvas.height);
-        this.camera.SetPosition(0.0,0.0,-15.0);
+        this.camera.SetPosition(0.0,-2.0,-15.0);
         
-        this.CreateRenderable([0, 0, 0], vertices, colors, vertexShader, fragmentShader);
-        this.CreateRenderable([0,-3,0], floor, fcolors, vertexShader, fragmentShader);
+        this.CreateRenderable([0, 0, 0], triV, triC, triI, vertexShader, fragmentShader);
+        this.CreateRenderable([0,-3,0], floorV, floorC, floorI, vertexShader, fragmentShader);
+        this.CreateRenderable([0, 0, 5.0], cubeV, cubeC, cubeI, vertexShader, fragmentShader);
     }
     
-    RenderApp.prototype.CreateRenderable = function(position, v, c, vs, fs){
-        this.renderables.push(this.renderer.CreateRenderable(position, v, c, vs, fs));
+    RenderApp.prototype.CreateRenderable = function(position, v, c, i, vs, fs){
+        this.renderables.push(this.renderer.CreateRenderable(position, v, c, i, vs, fs));
     }
 
     RenderApp.prototype.Run = function(){
