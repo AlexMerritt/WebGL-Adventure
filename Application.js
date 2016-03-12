@@ -5,12 +5,13 @@
 }
 
 function RenderApp() {
-    RenderApp.prototype.input = null;
-    RenderApp.prototype.renderer = null;
-    RenderApp.prototype.camera = null;
+    RenderApp.prototype.input;
+    RenderApp.prototype.renderer;
+    RenderApp.prototype.camera;
     
-    RenderApp.prototype.renderables = null;
+    RenderApp.prototype.renderables;
 
+    // These are for rendering some values to a html element
     RenderApp.prototype.posElement;
     RenderApp.prototype.rotElement;
 
@@ -36,13 +37,15 @@ function RenderApp() {
         this.camera.Init(canvas.width, canvas.height);
         this.camera.SetPosition(0.0,-2.0,-15.0);
         
-        this.CreateRenderable([0, 0, 0], triV, triC, triI, vertexShader, fragmentShader);
-        this.CreateRenderable([0,-3,0], floorV, floorC, floorI, vertexShader, fragmentShader);
-        this.CreateRenderable([0, 0, 5.0], cubeV, cubeC, cubeI, vertexShader, fragmentShader);
+        //this.CreateRenderable([0, 0, 0], triV, triC, triI, vertexShader, fragmentShader);
+        //this.CreateRenderable([0,-3,0], floorV, floorC, floorI, vertexShader, fragmentShader);
+        this.CreateRenderable([0, 0, 5.0], cubeV, cubeC, cudeUV, cubeI, "grad.png", vertexShader, fragmentShader);
     }
     
-    RenderApp.prototype.CreateRenderable = function(position, v, c, i, vs, fs){
-        this.renderables.push(this.renderer.CreateRenderable(position, v, c, i, vs, fs));
+    RenderApp.prototype.CreateRenderable = function(position, v, c, uv, i, tex, vs, fs){
+        var r = this.renderer.CreateRenderable(position, v, c, uv, i, vs, fs);
+        r.texture = this.renderer.CreateTexture(tex);
+        this.renderables.push(r);
     }
 
     RenderApp.prototype.Run = function(){
@@ -72,11 +75,6 @@ function RenderApp() {
     
     RenderApp.prototype.Update = function(deltaTime){
         this.input.Update();
-
-        if (this.input.IsMouseDown())
-        {
-            //console.log("Mouse Down");
-        }
         
         this.UpdateCamera(deltaTime);
     }
