@@ -9,9 +9,33 @@ function Renderable(){
     Renderable.prototype.program;
     Renderable.prototype.vertexBuffer;
     Renderable.prototype.colorBuffer;
+    Renderable.prototype.uvBuffer;
     Renderable.prototype.indexBuffer;
     Renderable.prototype.numfaces;
-    Renderable.prototype.position;
+    Renderable.prototype.position = new Position();
+    Renderable.prototype.rotation = new Position();
+    Renderable.prototype.texture;
+    
+    Renderable.prototype.SetPosition = function(x, y, z){
+        var p = new Position();
+        p.x = x;
+        p.y = y;
+        p.z = z;
+        this.position = p;
+    }
+    
+    Renderable.prototype.SetRotation = function(x,y,z){
+        var r = new Position();
+        r.x = x;
+        r.y = y;
+        r.z = z;
+        
+        this.rotation = r;
+    }
+    
+    Renderable.prototype.GetRotation = function() {
+        return this.rotation;
+    }
     
     Renderable.prototype.GetWorldMatrix = function(){
         var mat = mat4.create();
@@ -20,6 +44,12 @@ function Renderable(){
         
         mat4.translate(mat, [this.position.x, this.position.y, this.position.z]);
         
+        
+        
+        //mat4.rotate(mat, this.rotation.x, [1, 0, 0]);
+        mat4.rotate(mat, this.rotation.y, [0, 1, 0]);
+        //mat4.rotate(mat, this.rotation.z, [0, 0, 1]);
+        
         return mat;
     }
 }
@@ -27,9 +57,6 @@ function Renderable(){
 function Camera(){
     Camera.prototype.projection;
     Camera.prototype.world;
-    Camera.prototype.x;
-    Camera.prototype.y;
-    Camera.prototype.z;
     Camera.prototype.position;
     Camera.prototype.rotation;
     
@@ -71,6 +98,14 @@ function Camera(){
     Camera.prototype.GetRotation = function () {
         return this.rotation;
     }
+    
+    Camera.prototype.SetRotation = function (x, y, z) {
+        this.rotation.x = x;
+        this.rotation.y = y;
+        this.rotation.z = z;
+        
+        this.Update();
+    }
 
     Camera.prototype.Rotate = function (x, y, z) {
         this.rotation.x += x;
@@ -86,19 +121,23 @@ function Camera(){
     }
 }
 
+function CheckErr(gl) {
+    var error = gl.getError();
+
+    if (error != gl.NO_ERROR && error != gl.CONTEXT_LOST_WEBGL) {
+        console.log(error);
+    }
+}
+
 function Renderer() {
     // You will see a lot of var gl = this.glContext
     // This is because I don't want to type this.glContext all over the place
     // also gl should only be treated as read only. If you want to modify the 
     // gl context use this.glContext
 
-    Renderer.prototype.glContext = null;
-    Renderer.prototype.canvas = null;
-    Renderer.prototype.vertexBuffer = null;
-    Renderer.prototype.shaderProgram = null;
-    Renderer.prototype.clearColor = null;
-    Renderer.prototype.renderables = null;
-    Renderer.prototype.camera = null;
+    Renderer.prototype.glContext;
+    Renderer.prototype.canvas;
+    Renderer.prototype.clearColor;
 
     Renderer.prototype.Init = function () {
         this.canvas = document.getElementById("window");
@@ -106,8 +145,7 @@ function Renderer() {
         // Different brwosers use different web gl contexts so I need to check several
         this.glContext = this.canvas.getContext("webgl") || this.canvas.getContext("experimental-webgl") || this.canvas.getContext("moz-webgl") || this.canvas.getContext("webkit-3d");
         
-        this.SetClearColor([0.0, 0.0, 0.0, 1.0]);
-        this.renderables = [];
+        this.SetClearColor([0.0, 0.0, 0.0, 1.0]);    
 
         // Initialize the WebGl context if we got the context from the browser
         if (this.glContext) {
@@ -130,11 +168,12 @@ function Renderer() {
         gl.enable(gl.DEPTH_TEST);
     }
     
-    Renderer.prototype.CreateRenderable = function(position, v, c, i, vertexShaderCode, fragmentShaderCode) {
+    Renderer.prototype.CreateRenderable = function(position, v, c, uv, i, vertexShaderCode, fragmentShaderCode) {
         
         log(position)
         log(v)
         log(c)
+        log(uv)
         log(i)
         log("vertex shader: " + vertexShaderCode);
         log("fragment shader: " + fragmentShaderCode);
@@ -158,6 +197,13 @@ function Renderer() {
         
         r.colorBuffer = cb;
         
+        uvB = new Buffer();
+        uvB.data = this.CreateVB(uv);
+        uvB.numElements = numElements;
+        uvB.elementSize = 2;
+        
+        r.uvBuffer = uvB;
+        
         ib = new Buffer();
         ib.data = this.CreateIB(i);
         ib.numElements = i.length;
@@ -169,12 +215,14 @@ function Renderer() {
         r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
         
         // Create a point and set it's position
-        p = new Position();
-        p.x = position[0];
-        p.y = position[1];
-        p.z = position[2];
+//         p = new Position();
+//         p.x = position[0];
+//         p.y = position[1];
+//         p.z = position[2];
+//         
+//         r.position = p;
         
-        r.position = p;
+        r.SetPosition(position[0], position[1], position[2]);
         
         return r;
     }
@@ -255,6 +303,30 @@ function Renderer() {
         return shader;
     }
     
+    Renderer.prototype.CreateTexture = function(textureFile) {
+        var gl = this.glContext;
+        
+        var texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        
+        // Fill the texture with a 1x1 blue pixel.
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+                        new Uint8Array([0, 0, 255, 255]));
+        
+        // Asynchronously load an image
+        var image = new Image();
+        image.src = textureFile;
+        image.addEventListener('load', function() {
+            // Now that the image has loaded make copy it to the texture.
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,gl.UNSIGNED_BYTE, image);
+            gl.generateMipmap(gl.TEXTURE_2D);
+            gl.bindTexture(gl.TEXTURE_2D, null);
+        });
+        
+       return texture;
+    }
+    
     Renderer.prototype.SetClearColor = function(color){
         this.clearColor = color;
     }
@@ -280,39 +352,72 @@ function Renderer() {
         // Set the shader program we are going to use
         gl.useProgram(object.program);
 
+        this.SetVertexAttributes(object);
+        this.SetUniforms(object);
+        
+        this.SetCameraMats(object.program, camera);
+        
+        // Lastly bind the index buffer and draw the object
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer.data);
+        gl.drawElements(gl.TRIANGLES, object.indexBuffer.numElements, gl.UNSIGNED_SHORT, 0);
+    }
+    
+    Renderer.prototype.SetVertexAttributes = function (object) {
+        var gl = this.glContext;
         //Bind vertex buffer object and set the vertex on the shader
         gl.bindBuffer(gl.ARRAY_BUFFER, object.vertexBuffer.data);
         
         var pos = gl.getAttribLocation(object.program, "vertexPos");
-        gl.vertexAttribPointer(pos, object.vertexBuffer.elementSize, gl.FLOAT, false, 0, 0);
-        
-        gl.enableVertexAttribArray(pos);
+        if(pos != -1){
+            gl.vertexAttribPointer(pos, object.vertexBuffer.elementSize, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(pos);
+        }
         
         // Bind and declare the color vertex on the shader
         gl.bindBuffer(gl.ARRAY_BUFFER, object.colorBuffer.data);
         
         var color = gl.getAttribLocation(object.program, "inColor");
-        gl.vertexAttribPointer(color, object.colorBuffer.elementSize, gl.FLOAT, false, 0, 0);
+        if(color != -1){
+            gl.vertexAttribPointer(color, object.colorBuffer.elementSize, gl.FLOAT, false, 0, 0);
+            
+            gl.enableVertexAttribArray(color);
+        }
         
-        gl.enableVertexAttribArray(color);
+        // Bind the uv buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, object.uvBuffer.data);
+        
+        var uvs = gl.getAttribLocation(object.program, "inUV");
+        if (uvs != -1){
+            gl.vertexAttribPointer(uvs, object.uvBuffer.elementSize, gl.FLOAT, false, 0, 0);
+            gl.enableVertexAttribArray(uvs);
+        }       
+    }
+    
+    Renderer.prototype.SetUniforms = function(object){
+        var gl = this.glContext;
+        
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, object.texture);
+        var t = gl.getUniformLocation(object.program, "tex0");
+        if(t != -1){
+            gl.uniform1i(t, 0);
+        }
         
         // Set the object's position on the shader
         var pos = gl.getUniformLocation(object.program, "worldMatrix");
         gl.uniformMatrix4fv(pos, false, object.GetWorldMatrix());
         
+    }
+    
+    Renderer.prototype.SetCameraMats = function (program, camera) {
+        var gl = this.glContext;
         // Set the camera's view on the shader
-        var proj = gl.getUniformLocation(object.program, "projectionMatrix");
+        var proj = gl.getUniformLocation(program, "projectionMatrix");
         gl.uniformMatrix4fv(proj, false, camera.projection);
         
         // Set the camera's project on the shader
-        var world = gl.getUniformLocation(object.program, "viewMatrix");
+        var world = gl.getUniformLocation(program, "viewMatrix");
         gl.uniformMatrix4fv(world, false, camera.world);
-
-        // Draw the triangle
-        //gl.drawArrays(gl.TRIANGLES, 0, object.vertexBuffer.numElements);
-        
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, object.indexBuffer.data);
-        gl.drawElements(gl.TRIANGLES, object.indexBuffer.numElements, gl.UNSIGNED_SHORT, 0);
     }
 
     Renderer.prototype.Begin = function(){
@@ -327,4 +432,3 @@ function Renderer() {
 
     }
 }
-
