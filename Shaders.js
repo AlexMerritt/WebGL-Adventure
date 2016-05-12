@@ -12,7 +12,7 @@ varying vec4 vColor;
 
 void main(void)
 {
-    gl_Position = worldMatrix * vec4(vertexPos, 1.0);
+    gl_Position = worldMatrix * vec4(vertexPos.x, -vertexPos.y, vertexPos.z, 1.0);
     gl_Position = viewMatrix * gl_Position;
     gl_Position = projectionMatrix * gl_Position;
     

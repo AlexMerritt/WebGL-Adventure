@@ -10,6 +10,7 @@ function RenderApp() {
     RenderApp.prototype.camera;
     
     RenderApp.prototype.renderables;
+    RenderApp.prototype.entities;
 
     // These are for rendering some values to a html element
     RenderApp.prototype.posElement;
@@ -32,20 +33,39 @@ function RenderApp() {
         canvas = document.getElementById("window");
 
         this.renderables = [];
+        this.entities = [];
         
         this.camera = new Camera();
         this.camera.Init(canvas.width, canvas.height);
         this.camera.SetPosition(0.0,-2.0,-15.0);
+        this.camera.SetRotation(1, 0, 0);
         
-        //this.CreateRenderable([0, 0, 0], triV, triC, triI, vertexShader, fragmentShader);
-        //this.CreateRenderable([0,-3,0], floorV, floorC, floorI, vertexShader, fragmentShader);
-        this.CreateRenderable([0, 0, 5.0], cubeV, cubeC, cudeUV, cubeI, "grad.png", vertexShader, fragmentShader);
+        var e;
+        
+        e = this.CreateRenderable([0,-3,0], floorV, floorC, floorUV, floorI, "khronos.png", vertexShader, fragmentShader);
+        e.renderable.SetRotation(0,0,0);
+        
+        e = this.CreateRenderable([0, 0, 5], cubeV, cubeC, cudeUV, cubeI, "khronos.png", vertexShader, fragmentShader);
+        e.renderable.SetRotation(0,0,0);
+        
+        e.AddBehavior(new Behavior());
     }
     
     RenderApp.prototype.CreateRenderable = function(position, v, c, uv, i, tex, vs, fs){
+        var e = new Entity();
         var r = this.renderer.CreateRenderable(position, v, c, uv, i, vs, fs);
         r.texture = this.renderer.CreateTexture(tex);
         this.renderables.push(r);
+        
+        e.renderable = r;
+        
+        this.entities.push(e);
+        
+        return e;
+    }
+    
+    RenderApp.prototype.AddEntity = function(entity) {
+        
     }
 
     RenderApp.prototype.Run = function(){
@@ -75,6 +95,10 @@ function RenderApp() {
     
     RenderApp.prototype.Update = function(deltaTime){
         this.input.Update();
+        
+        for(i in this.entities){
+            this.entities[i].Update(deltaTime);
+        }
         
         this.UpdateCamera(deltaTime);
     }

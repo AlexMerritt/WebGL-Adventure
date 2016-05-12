@@ -1,15 +1,11 @@
-﻿var debug = false;
+﻿
+
+var debug = false;
 
 function log(o){
     if (debug){
         console.log(o);
     }
-}
-
-function Position(){
-    Position.prototype.x;
-    Position.prototype.y;
-    Position.prototype.z;
 }
 
 var KeyCode = {
@@ -184,7 +180,7 @@ function Input(){
     // This shoudl only fire once until the user pressed the key again
     // and releases it
     Input.prototype.IsKeyReleased = function(key){
-        return (~this.currentKeyboard[key] && this.lastKeyboard[key]);
+//         return (~this.currentKeyboard[key] && this.lastKeyboard[key]);
     }
 
     Input.prototype.IsMouseDown = function () {
@@ -193,14 +189,37 @@ function Input(){
 }
 
 function Behavior(){
+    Behavior.prototype.parent;
+    
     Behavior.prototype.OnCreate = function(){
+        
     }
     
-    Behavior.prototype.Update = function(){
+    Behavior.prototype.Update = function(dt) {
+        var r = this.parent.renderable.GetRotation();
+        r.y += dt / 50;
+        this.parent.renderable.SetRotation(r.x, r.y, r.z);
     }
 }
 
 function Entity(){
+    Entity.prototype.renderable;
+    Entity.prototype.behaviors = [];
     
+    Entity.prototype.AddBehavior = function(behavior){
+        behavior.parent = this;
+        this.behaviors.push(behavior);
+    }
+    
+    Entity.prototype.Update = function(dt){
+        console.log(this.behaviors);
+        for(i in this.behaviors){
+            this.behaviors[i].Update(dt);
+        }
+    }
+    
+    
+    // Transform
+    // Behaviors
 }
 

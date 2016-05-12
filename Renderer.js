@@ -11,8 +11,30 @@ function Renderable(){
     Renderable.prototype.uvBuffer;
     Renderable.prototype.indexBuffer;
     Renderable.prototype.numfaces;
-    Renderable.prototype.position;
+    Renderable.prototype.position = new Position();
+    Renderable.prototype.rotation = new Position();
     Renderable.prototype.texture;
+    
+    Renderable.prototype.SetPosition = function(x, y, z){
+        var p = new Position();
+        p.x = x;
+        p.y = y;
+        p.z = z;
+        this.position = p;
+    }
+    
+    Renderable.prototype.SetRotation = function(x,y,z){
+        var r = new Position();
+        r.x = x;
+        r.y = y;
+        r.z = z;
+        
+        this.rotation = r;
+    }
+    
+    Renderable.prototype.GetRotation = function() {
+        return this.rotation;
+    }
     
     Renderable.prototype.GetWorldMatrix = function(){
         var mat = mat4.create();
@@ -21,6 +43,12 @@ function Renderable(){
         
         mat4.translate(mat, [this.position.x, this.position.y, this.position.z]);
         
+        
+        
+        //mat4.rotate(mat, this.rotation.x, [1, 0, 0]);
+        mat4.rotate(mat, this.rotation.y, [0, 1, 0]);
+        //mat4.rotate(mat, this.rotation.z, [0, 0, 1]);
+        
         return mat;
     }
 }
@@ -28,9 +56,6 @@ function Renderable(){
 function Camera(){
     Camera.prototype.projection;
     Camera.prototype.world;
-    Camera.prototype.x;
-    Camera.prototype.y;
-    Camera.prototype.z;
     Camera.prototype.position;
     Camera.prototype.rotation;
     
@@ -71,6 +96,14 @@ function Camera(){
 
     Camera.prototype.GetRotation = function () {
         return this.rotation;
+    }
+    
+    Camera.prototype.SetRotation = function (x, y, z) {
+        this.rotation.x = x;
+        this.rotation.y = y;
+        this.rotation.z = z;
+        
+        this.Update();
     }
 
     Camera.prototype.Rotate = function (x, y, z) {
@@ -182,12 +215,14 @@ function Renderer() {
         r.program = this.CreateShaderProgram(vertexShaderCode, fragmentShaderCode);
         
         // Create a point and set it's position
-        p = new Position();
-        p.x = position[0];
-        p.y = position[1];
-        p.z = position[2];
+//         p = new Position();
+//         p.x = position[0];
+//         p.y = position[1];
+//         p.z = position[2];
+//         
+//         r.position = p;
         
-        r.position = p;
+        r.SetPosition(position[0], position[1], position[2]);
         
         return r;
     }
@@ -396,7 +431,4 @@ function Renderer() {
     Renderer.prototype.End = function () {
 
     }
-    
-    
 }
-
