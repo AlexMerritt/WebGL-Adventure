@@ -3,35 +3,27 @@
 <html>
 <head>
     <title></title>
-    <script src="GLMatrix.min.js"></script>
-    <script src="Models.js"></script>
-    <script src="Shaders.js"></script>
-    <script src="Renderer.js"></script>
-    <script src="System.js"></script>
-    <script src="Application.js"></script>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
-<body onload="RunGL()">
+<body>
+    <div class="container">
+    <nav class="navbar navbar-default">
+        <div class="container-fluid">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="index.html">Home</a></li>
+                <li><a href="Engine/engine.html">WebGL Engine</a></li>
+                <li><a href="THREE/three.html">THREE.js Scenes</a></li>
+            </ul>
+        </div>
+    </nav>
+    <p>
+        The purpose of this website is to display WebGL concepts. I have created a game engine in the past using DirectX, OpenGL and C++ and now I want to take those concpets and transfer them to WebGL.
+    </p>
+    <p>
+        There are currently 2 projects on this site. An engine which uses WebGL to render object efficently and a THREE.js project that has small contained graphic scenes.
+    </p>
     <div>
-        <canvas id="window" width="1240" height="720"></canvas>
-    </div>
-	<div>
-        <p>
-            <a id="pos"></a>
-            <br />
-            <a id="rot"></a>
-        </p>
-		<p>
-			<a>Controls</a>
-			<p>
-				A: move left
-				<br />
-				D: move right
-				<br />
-				S: move down
-				<br />
-				W: move up
-			</p>
-		</p>
-	</div>
 </body>
 </html>

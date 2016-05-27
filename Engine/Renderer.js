@@ -1,5 +1,4 @@
-﻿
-function Buffer(){
+﻿function Buffer(){
     Renderable.prototype.data;
     Renderable.prototype.numElements;
     Renderable.prototype.elementSize;
@@ -179,6 +178,7 @@ function Renderer() {
         log("fragment shader: " + fragmentShaderCode);
         
         var numElements = v.length / 3;
+        
         r = new Renderable();
         
         // Create the vertex buffer and set it's attributes

@@ -1,0 +1,13 @@
+{
+  "name": "ThreeRend",
+  "version": "0.0.0",
+  "main": "index.html",
+  "window": {
+    "title": "THREE.js Rendering app",
+    "toolbar": false,
+    "width": 1280,
+    "height": 720,
+    "resizable": false,
+    "icon": "images/tool.png"
+  }
+}

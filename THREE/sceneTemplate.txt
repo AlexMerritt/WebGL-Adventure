@@ -1,0 +1,28 @@
+var <scene-name> = (function () {
+    function <scene-name>() {
+        this.name = "<scene-name>";
+        
+        this.entitySystem = new EntitySystem();
+        this.textureLoader = new THREE.TextureLoader();
+    };
+    
+    <scene-name>.prototype.init = function (renderWindow) {
+        
+    };
+    
+    <scene-name>.prototype.addGUI = function(gui){
+    };
+    
+    <scene-name>.prototype.destroy = function () {
+        
+    };
+    
+    <scene-name>.prototype.update = function (dt){
+        
+    };
+    
+    <scene-name>.prototype.render = function (){
+    }
+    
+    return <scene-name>;
+})();
