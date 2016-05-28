@@ -44,10 +44,8 @@ var App = (function () {
         
         this.renderer = new THREE.WebGLRenderer();
         this.setRenderSize(ResolutionMode.Small);
-        
-        document.body.appendChild(this.renderer.domElement);
-        
-        
+        //document.body.appendChild(this.renderer.domElement);
+        $('#renderer').append(this.renderer.domElement);
         
         this.scenes.push(new SphereScene());
         this.scenes.push(new BoxScene());
@@ -61,7 +59,8 @@ var App = (function () {
     App.prototype.createGUI = function () {
         var scs = { };
         
-        this.gui = new dat.GUI();
+        this.gui = new dat.GUI({autoPlace: false});
+        $('#gui').append(this.gui.domElement);
         console.log(this.gui);
         
         this.sceneListCtrl = this.gui.addFolder("Scenes");
@@ -146,7 +145,6 @@ var App = (function () {
         // Calculate the delta time since last frame
         var deltaTime = now - time;
         if(deltaTime > 2.0){
-            console.log("time elapsed too long. Value: " + deltaTime);
             deltaTime = 0.01;
         }
         
