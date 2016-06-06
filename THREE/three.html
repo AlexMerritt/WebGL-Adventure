@@ -3,7 +3,16 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>THREE.js HTML App</title>
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				color: #808080;
+				font-family:Monospace;
+				font-size:13px;
+				text-align:center;
+				background-color: #000;
+				margin: 0px;
+		</style>
     <link rel="stylesheet" href="style/app.css" type="text/css" />
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     
@@ -26,21 +35,20 @@
 </head>
 <body>
     <div class="container">
-    <nav class="navbar navbar-default">
-        <div class="container-fluid">
-            <ul class="nav navbar-nav">
-                <li><a href="../index.html">Home</a></li>
-                <li><a href="../Engine/engine.html">WebGL Engine</a></li>
-                <li class="active"><a href="../THREE/three.html">THREE.js Scenes</a></li>
-            </ul>
-        </div>
-    </nav>
-    <h1>THREE.js HTML App</h1>
+        <nav class="navbar navbar-default">
+            <div class="container-fluid">
+                <ul class="nav navbar-nav">
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="../Engine/engine.html">WebGL Engine</a></li>
+                    <li class="active"><a href="../THREE/three.html">THREE.js Scenes</a></li>
+                </ul>
+            </div>
+        </nav>
 
-    <div id="content">
-        <div id="gui" class="col-md-3"></div>
-        <div id="renderer" class="col-md-9"></div>
-    </div>
+        <div id="content">
+            <div id="gui" class="col-md-3"></div>
+            <div id="renderer" class="col-md-9"></div>
+        </div>
     </div>
 </body>
 </html>

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "main": "index.html",
   "window": {
-    "title": "THREE.js Rendering app",
+    "title": "WebGL",
     "toolbar": false,
     "width": 1280,
     "height": 720,
