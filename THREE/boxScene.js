@@ -78,7 +78,7 @@ var BoxScene = (function () {
             amplitude: {type:'f', value: 2.0}
         };        
         
-        this.textureLoader.load("khronos.png", function(tex){
+        this.textureLoader.load("../images/khronos.png", function(tex){
             this.uniforms['texture1'] = {type:'t', value: tex};
             
             var mesh = CreateMesh(geometry, vertSh, fragSh, this.uniforms);
