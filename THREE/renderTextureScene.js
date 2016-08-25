@@ -46,7 +46,7 @@ var RenderTextureScene = (function () {
         
         var geometry = new THREE.BoxBufferGeometry(400, 400, 400);
         
-        this.textureLoader.load("khronos.png", function(tex){
+        this.textureLoader.load("../images/khronos.png", function(tex){
             var geo = new THREE.BoxBufferGeometry(800, 800, 800);
             this.uniforms['texture1'] = {type:'t', value: tex};
             

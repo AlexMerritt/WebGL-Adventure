@@ -50,6 +50,7 @@ var App = (function () {
         this.scenes.push(new SphereScene());
         this.scenes.push(new BoxScene());
         this.scenes.push(new RenderTextureScene());
+        this.scenes.push(new CubeMapScene());
         
         this.createGUI();
         
